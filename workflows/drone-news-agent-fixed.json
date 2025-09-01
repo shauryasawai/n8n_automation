@@ -1,0 +1,179 @@
+{
+  "name": "AI Drone News Agent - Fixed",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=drone+technology+India&hl=en-IN&gl=IN&ceid=IN:en",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "xml"
+            }
+          }
+        }
+      },
+      "id": "2",
+      "name": "Fetch Drone News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simple RSS parser using n8n's built-in XML parsing (NO external modules)\nconst input = $input.all()[0].json;\n\n// n8n automatically converts XML to JSON when responseFormat is set to \"xml\"\n// Let's find the news items in the parsed structure\nlet articles = [];\n\ntry {\n  // Debug: Log the structure we received\n  console.log('RSS data structure keys:', Object.keys(input));\n  \n  // Try different possible RSS structures that n8n might create\n  if (input.rss?.channel?.item) {\n    articles = Array.isArray(input.rss.channel.item) ? input.rss.channel.item : [input.rss.channel.item];\n    console.log('Found articles in rss.channel.item:', articles.length);\n  } else if (input.channel?.item) {\n    articles = Array.isArray(input.channel.item) ? input.channel.item : [input.channel.item];\n    console.log('Found articles in channel.item:', articles.length);\n  } else if (input.item) {\n    articles = Array.isArray(input.item) ? input.item : [input.item];\n    console.log('Found articles in item:', articles.length);\n  } else {\n    // Try to find any array that might contain items\n    for (const key of Object.keys(input)) {\n      const value = input[key];\n      if (Array.isArray(value) && value.length > 0 && value[0].title) {\n        articles = value;\n        console.log('Found articles in key:', key, 'count:', articles.length);\n        break;\n      }\n    }\n  }\n  \n  // If we still don't have articles, return debug information\n  if (articles.length === 0) {\n    console.log('No articles found. Full structure:', JSON.stringify(input, null, 2).substring(0, 1000));\n    return [{ \n      json: { \n        error: 'No articles found in RSS feed', \n        availableKeys: Object.keys(input),\n        sampleStructure: JSON.stringify(input, null, 2).substring(0, 500) + '...',\n        debug: true\n      } \n    }];\n  }\n  \n  // Process top 3 articles\n  console.log('Processing', Math.min(3, articles.length), 'articles...');\n  \n  return articles.slice(0, 3).map((article, index) => {\n    // Clean HTML tags from text\n    const cleanText = (text) => {\n      if (!text) return '';\n      return String(text)\n        .replace(/<[^>]*>/g, '') // Remove HTML tags\n        .replace(/&[^;]+;/g, ' ') // Remove HTML entities\n        .replace(/\\s+/g, ' ') // Normalize whitespace\n        .trim();\n    };\n    \n    // Extract domain from URL\n    const extractSource = (url) => {\n      try {\n        if (!url) return 'Unknown';\n        const domain = new URL(String(url)).hostname;\n        return domain.replace('www.', '');\n      } catch {\n        return 'Unknown';\n      }\n    };\n    \n    const processedArticle = {\n      json: {\n        id: index + 1,\n        title: cleanText(article.title),\n        link: String(article.link || ''),\n        description: cleanText(article.description).substring(0, 300),\n        pubDate: String(article.pubDate || ''),\n        source: extractSource(article.link),\n        originalTitle: article.title // Keep original for debugging\n      }\n    };\n    \n    console.log('Processed article', index + 1, ':', processedArticle.json.title);\n    return processedArticle;\n  });\n  \n} catch (error) {\n  console.error('RSS processing error:', error);\n  return [{ \n    json: { \n      error: 'Processing failed', \n      message: error.message,\n      inputType: typeof input,\n      inputKeys: Object.keys(input)\n    } \n  }];\n}"
+      },
+      "id": "3",
+      "name": "Parse & Select Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-your-openai-key-replace-this"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonParameters": true,
+        "body": "={\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional social media content creator specializing in drone technology news. Create engaging, informative posts with relevant hashtags.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create an engaging social media post about this drone news article. Write 2-3 compelling paragraphs and include 5-7 relevant hashtags. Make it shareable and informative.\\n\\nTitle: \" + $json.title + \"\\nDescription: \" + $json.description + \"\\nSource: \" + $json.source\n    }\n  ],\n  \"max_tokens\": 400,\n  \"temperature\": 0.7\n}"
+      },
+      "id": "4",
+      "name": "AI Summarization",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format AI response into social media caption\nconst items = $input.all();\n\nconsole.log('Formatting', items.length, 'items...');\n\nreturn items.map((item, index) => {\n  const aiResponse = item.json.choices?.[0]?.message?.content || 'AI summary not available';\n  const title = item.json.title || 'News Update';\n  const link = item.json.link || '';\n  const id = item.json.id || index + 1;\n  const source = item.json.source || 'Unknown';\n  \n  // Create formatted caption with emojis and structure\n  const caption = `🚀 Drone Update #${id} 🚀\n\n${aiResponse}\n\n🔗 Read more: ${link}\n📰 Source: ${source}\n\n#DroneNews #UAVTechnology #Innovation #TechUpdate #DroneTech`;\n\n  console.log(`Formatted caption for article ${id}: ${caption.length} characters`);\n\n  return {\n    json: {\n      caption: caption,\n      title: title,\n      link: link,\n      summary: aiResponse,\n      characterCount: caption.length,\n      id: id,\n      source: source\n    }\n  };\n});"
+      },
+      "id": "5",
+      "name": "Format Social Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\n// Get posts output directory from environment or use default\nconst outputDir = process.env.POSTS_OUTPUT_DIR || path.join(process.cwd(), 'generated-posts');\n\nconsole.log('Output directory:', outputDir);\n\n// Ensure directory exists\nif (!fs.existsSync(outputDir)) {\n  fs.mkdirSync(outputDir, { recursive: true });\n  console.log('✅ Created posts directory:', outputDir);\n}\n\nconst items = $input.all();\nconsole.log('Saving', items.length, 'posts...');\n\nreturn items.map((item, index) => {\n  const caption = item.json.caption || 'No content available';\n  const title = item.json.title || 'Drone News';\n  const link = item.json.link || '';\n  const summary = item.json.summary || '';\n  const source = item.json.source || 'Unknown';\n  const id = item.json.id || index + 1;\n  \n  // Create timestamp for filename\n  const now = new Date();\n  const timestamp = now.toISOString().replace(/[:.]/g, '-');\n  const filename = `drone-post-${timestamp}-${id}.md`;\n  const filepath = path.join(outputDir, filename);\n  \n  // Create rich markdown content\n  const markdownContent = `# Drone News Post #${id}\n\n**Generated:** ${now.toLocaleString()}\n**Original Title:** ${title}\n**Source:** ${source}\n\n---\n\n## 📱 Social Media Content\n\n${caption}\n\n---\n\n## 📊 Metadata\n\n- **Character Count:** ${caption.length}\n- **Word Count:** ${caption.split(/\\s+/).length}\n- **Source:** ${source}\n- **Original Link:** ${link}\n- **Generated:** ${now.toISOString()}\n\n## 🤖 AI Summary\n\n${summary}\n\n## 📄 Original Article Info\n\n- **Title:** ${title}\n- **Link:** [${title}](${link})\n- **Source Domain:** ${source}\n\n---\n\n*Generated by n8n AI Agent - Drone News Automation*\n*File: ${filename}*\n`;\n\n  try {\n    // Save file\n    fs.writeFileSync(filepath, markdownContent, 'utf8');\n    \n    console.log(`✅ Saved post #${id}: ${filename}`);\n    \n    return {\n      json: {\n        success: true,\n        filename: filename,\n        filepath: filepath,\n        caption: caption,\n        title: title,\n        characterCount: caption.length,\n        wordCount: caption.split(/\\s+/).length,\n        savedAt: now.toISOString(),\n        id: id\n      }\n    };\n  } catch (error) {\n    console.error(`❌ Failed to save post #${id}:`, error.message);\n    return {\n      json: {\n        success: false,\n        error: error.message,\n        caption: caption,\n        title: title,\n        id: id\n      }\n    };\n  }\n});"
+      },
+      "id": "6",
+      "name": "Save Posts Locally",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily 9AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Drone News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Drone News": {
+      "main": [
+        [
+          {
+            "node": "Parse & Select Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Select Articles": {
+      "main": [
+        [
+          {
+            "node": "AI Summarization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarization": {
+      "main": [
+        [
+          {
+            "node": "Format Social Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Social Caption": {
+      "main": [
+        [
+          {
+            "node": "Save Posts Locally",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveManualExecutions": true
+  },
+  "versionId": "1",
+  "id": "drone-news-agent-fixed"
+}

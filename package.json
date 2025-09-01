@@ -1,0 +1,28 @@
+{
+  "name": "n8n-ai-agent",
+  "version": "1.0.0",
+  "description": "AI-powered drone news agent with n8n (no Docker)",
+  "main": "index.js",
+  "scripts": {
+    "start": "n8n start",
+    "dev": "set NODE_ENV=development && n8n start",
+    "test": "node scripts/tests/workflow-test.js",
+    "setup": "npm install && echo Setup complete!",
+    "backup": "node scripts/utils/backup-workflow.js",
+    "import-workflow": "node scripts/utils/import-workflow.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "xml2js": "^0.6.2",
+    "node-cron": "^3.0.2",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["n8n", "automation", "ai", "drone", "news"],
+  "author": "Your Name",
+  "license": "MIT"
+}
