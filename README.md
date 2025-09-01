@@ -45,6 +45,26 @@ Google RSS → Parse Articles → AI Processing → Content Formatting → Local
  News Feed    Top 3 Articles   GPT Summary    Social Media Post    .md Files
 ```
 
+### 🖼️ Project Screenshots
+
+<div align="center">
+  <h4>📊 Complete n8n Workflow</h4>
+  <img src="https://drive.google.com/uc?export=view&id=1jkbxj7BNdZ_i83DmgtODKDi089t-6wx6" alt="n8n Workflow Overview" width="800">
+  <p><em>Complete workflow showing all nodes: RSS fetch, parsing, AI processing, and file saving</em></p>
+</div>
+
+<div align="center">
+  <h4>✅ Successful Execution</h4>
+  <img src="https://drive.google.com/uc?export=view&id=1FnqNpsBkinhHSN_k340maQrK_dnjWLw3" alt="Workflow Execution Success" width="800">
+  <p><em>All nodes executed successfully with green checkmarks</em></p>
+</div>
+
+<div align="center">
+  <h4>📁 Generated Posts Output</h4>
+  <img src="https://drive.google.com/uc?export=view&id=1XsmrQzlSL2_Q2nQp09Po1ZoyEy7edZCE" alt="Generated Posts Files" width="800">
+  <p><em>Markdown files successfully created in the file system</em></p>
+</div>
+
 ---
 
 ## ✨ Features
@@ -277,6 +297,11 @@ npm run import-workflow
 3. **Check** execution log for any errors
 4. **Verify** files are created
 
+<div align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1FnqNpsBkinhHSN_k340maQrK_dnjWLw3" alt="Successful Workflow Execution" width="600">
+  <p><em>Example of successful workflow execution with all nodes completed</em></p>
+</div>
+
 #### Check Generated Posts
 ```bash
 # List all saved posts
@@ -288,6 +313,11 @@ npm run posts:latest
 # Open posts folder
 npm run posts:open
 ```
+
+<div align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1XsmrQzlSL2_Q2nQp09Po1ZoyEy7edZCE" alt="Generated Posts in File System" width="600">
+  <p><em>Generated Markdown files saved successfully to the local file system</em></p>
+</div>
 
 ### Activating Automation
 1. **In n8n**, toggle "Active" switch to ON
@@ -336,6 +366,11 @@ n8n-ai-agent/
 ---
 
 ## 🔄 Workflow Details
+
+<div align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1jkbxj7BNdZ_i83DmgtODKDi089t-6wx6" alt="n8n Workflow Detailed View" width="700">
+  <p><em>Detailed view of the n8n workflow with all configured nodes</em></p>
+</div>
 
 ### Node Breakdown
 
@@ -727,6 +762,11 @@ SOFTWARE.
 
 ## 🎯 Quick Start Summary
 
+<div align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1FnqNpsBkinhHSN_k340maQrK_dnjWLw3" alt="Working n8n AI Agent" width="500">
+  <p><em>Your AI agent working successfully!</em></p>
+</div>
+
 For the impatient developers:
 
 ```bash
@@ -765,4 +805,4 @@ npm run dev
 
 **Happy Automating! 🚀**
 
-*Last updated: September 2025*
+*Last updated: September 2024*
